@@ -59,6 +59,7 @@ editor.theme = theme
 - **iOS** and **Android** draw the gutter themselves. Theme colors do not change with the system appearance; the default theme is chosen to be legible on both light and dark backgrounds.
 - Highlighting re-lexes the whole buffer after a short pause in typing. Files of a few thousand lines are fine on a desktop; very large files are slower on phones.
 - Some third-party Android keyboards ignore the flag that disables suggestions.
+- On Android, the widget asks the window to shrink its content when the soft keyboard appears, so the editor scrolls internally and the rest of the layout stays put. It only does this when the app has not chosen a soft-input mode itself.
 
 ## Developing
 

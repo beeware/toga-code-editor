@@ -2,9 +2,10 @@ import weakref
 
 from android.graphics import Typeface
 from android.text import InputType, Spanned
+from android.text.method import ScrollingMovementMethod
 from android.text.style import ForegroundColorSpan, StyleSpan
 from android.util import TypedValue
-from android.view import Gravity, View
+from android.view import Gravity, View, WindowManager
 from android.widget import RelativeLayout, TextView
 from java import dynamic_proxy
 from java.lang import Runnable
@@ -42,6 +43,12 @@ class TogaGutterLayoutListener(dynamic_proxy(View.OnLayoutChangeListener)):
                 self.impl.native.post(self.impl.gutter_updater)
 
 
+class TogaGutterTouchListener(dynamic_proxy(View.OnTouchListener)):
+    def onTouch(self, view, event):
+        # The gutter follows the editor; it must not scroll on its own.
+        return True
+
+
 class TogaGutterUpdater(dynamic_proxy(Runnable)):
     def __init__(self, impl):
         super().__init__()
@@ -62,6 +69,15 @@ class CodeEditor(MultilineTextInput):
         self.gutter.setId(View.generateViewId())
         self.gutter.setGravity(Gravity.END | Gravity.TOP)
         self.gutter.setTextColor(self.native.getCurrentHintTextColor())
+        # Without a movement method, a TextView scrolls back to its start on the
+        # first draw after setText(), which would undo the scroll sync every time
+        # the numbers are rebuilt. The movement method also makes the view
+        # focusable and clickable, so undo that and swallow touches.
+        self.gutter.setMovementMethod(ScrollingMovementMethod.getInstance())
+        self.gutter.setFocusable(False)
+        self.gutter.setClickable(False)
+        self.gutter.setLongClickable(False)
+        self.gutter.setOnTouchListener(TogaGutterTouchListener())
         self.gutter.setPadding(
             padding,
             self.native.getPaddingTop(),
@@ -93,9 +109,24 @@ class CodeEditor(MultilineTextInput):
     def create(self):
         super().create()
         self.disable_suggestions()
+        self.prefer_keyboard_resize()
         self.theme = {}
         self.spans = []
         self.active_spans = []
+
+    def prefer_keyboard_resize(self):
+        # By default Android pans the whole window to keep the cursor above the soft
+        # keyboard, which scrolls everything above the editor off the screen. Ask for
+        # the content area to shrink instead, so the editor scrolls internally, but
+        # only when the app has not chosen a mode itself.
+        params = WindowManager.LayoutParams
+        window = self._native_activity.getWindow()
+        mode = window.getAttributes().softInputMode
+        if mode & params.SOFT_INPUT_MASK_ADJUST == params.SOFT_INPUT_ADJUST_UNSPECIFIED:
+            mode = (
+                mode & ~params.SOFT_INPUT_MASK_ADJUST
+            ) | params.SOFT_INPUT_ADJUST_RESIZE
+            window.setSoftInputMode(mode)
 
     def disable_suggestions(self):
         # NO_SUGGESTIONS turns off autocorrect on most keyboards. Some third-party
