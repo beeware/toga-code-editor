@@ -90,6 +90,8 @@ async def test_native_change_debounces(app):
 
     assert changes == ["x = 1", "x = 1"]
     assert attribute_value(editor, "highlights") == []
+    # A task, not a bare call_later: Toga's Android loop only wakes for the former.
+    assert isinstance(editor._pending_rehighlight, asyncio.Task)
 
     await asyncio.sleep(REHIGHLIGHT_DELAY * 2)
     assert attribute_value(editor, "highlights") == X_EQUALS_ONE

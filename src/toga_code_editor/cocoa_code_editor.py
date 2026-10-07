@@ -187,7 +187,17 @@ class CodeEditor(MultilineTextInput):
 
     def apply_highlights(self):
         storage = self.native_text.textStorage
-        full_range = NSRange(0, storage.length())
+        length = storage.length()
+        full_range = NSRange(0, length)
+        # Between a native edit and the debounced re-highlight the spans describe the
+        # previous text, so clamp them: a range past the end raises NSRangeException
+        # inside AppKit, which cannot be caught from Python. Convert before editing
+        # so a Python error cannot leave the storage mid-edit either.
+        spans = [
+            (span.start, min(span.end, length), self.attributes.get(span.kind))
+            for span in to_utf16_spans(self.get_value(), self.spans)
+            if span.start < length
+        ]
         storage.beginEditing()
         # Reset to the base font and color, then paint each span.
         storage.addAttribute(
@@ -196,12 +206,9 @@ class CodeEditor(MultilineTextInput):
         storage.addAttribute(
             NSForegroundColorAttributeName, value=self.base_color, range=full_range
         )
-        for span in to_utf16_spans(self.get_value(), self.spans):
-            attributes = self.attributes.get(span.kind)
-            if attributes is not None:
-                storage.addAttributes(
-                    attributes, range=NSRange(span.start, span.end - span.start)
-                )
+        for start, end, attributes in spans:
+            if attributes is not None and end > start:
+                storage.addAttributes(attributes, range=NSRange(start, end - start))
         storage.endEditing()
 
     # Gutter
