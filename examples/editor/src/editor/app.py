@@ -23,10 +23,23 @@ class Editor(toga.App):
         )
         self.status = toga.Label("", flex=1)
 
+        # Two rows so the controls fit a phone's width.
         toolbar = toga.Box(
-            children=[self.sample, self.language, self.line_numbers, self.status],
-            direction=ROW,
-            align_items="center",
+            children=[
+                toga.Box(
+                    children=[self.sample, self.language],
+                    direction=ROW,
+                    align_items="center",
+                    gap=5,
+                ),
+                toga.Box(
+                    children=[self.line_numbers, self.status],
+                    direction=ROW,
+                    align_items="center",
+                    gap=5,
+                ),
+            ],
+            direction=COLUMN,
             margin=5,
             gap=5,
         )

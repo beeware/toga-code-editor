@@ -59,6 +59,10 @@ where = ["src"]
 [tool.ruff.lint]
 extend-select = ["E", "W", "F", "UP", "B", "ASYNC", "C4", "I"]
 
+[tool.ruff.lint.per-file-ignores]
+# The module is named after the toga_iOS backend it implements.
+"src/toga_code_editor/iOS_code_editor.py" = ["N999"]
+
 [tool.ruff.lint.isort]
 combine-as-imports = true
 known-first-party = ["toga_code_editor"]
