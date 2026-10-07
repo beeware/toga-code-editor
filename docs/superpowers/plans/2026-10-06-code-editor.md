@@ -453,7 +453,9 @@ from toga_code_editor.highlighting import (
 
 def test_python_snippet():
     """A Python snippet lexes into merged, offset-correct spans; plain names are dropped."""
-    spans = PygmentsHighlighter("python").highlight("def f(x):\n    return x + 1  # hi\n")
+    spans = PygmentsHighlighter("python").highlight(
+        "def f(x):\n    return x + 1  # hi\n"
+    )
     assert spans == [
         Span(0, 3, TokenKind.KEYWORD),
         Span(4, 5, TokenKind.DEFINITION),
@@ -477,7 +479,7 @@ def test_null_highlighter():
 
 def test_utf16_offsets():
     """An astral character shifts every later UTF-16 offset by one."""
-    text = "x = '\U0001F600'  # c\n"
+    text = "x = '\U0001f600'  # c\n"
     spans = [Span(4, 7, TokenKind.STRING), Span(9, 12, TokenKind.COMMENT)]
     assert to_utf16_spans(text, spans) == [
         Span(4, 8, TokenKind.STRING),
@@ -485,7 +487,7 @@ def test_utf16_offsets():
     ]
     assert utf16_line_starts("") == [0]
     assert utf16_line_starts("a\n") == [0, 2]
-    assert utf16_line_starts("\U0001F600\r\nb") == [0, 4]
+    assert utf16_line_starts("\U0001f600\r\nb") == [0, 4]
 
 
 @pytest.mark.parametrize(
@@ -1108,7 +1110,15 @@ Toga internals this module subclasses, from toga-cocoa 0.5.7: `toga_cocoa.widget
 ```python
 from bisect import bisect_right
 
-from rubicon.objc import SEL, NSPoint, NSRange, NSRect, ObjCClass, objc_method, objc_property
+from rubicon.objc import (
+    SEL,
+    NSPoint,
+    NSRange,
+    NSRect,
+    ObjCClass,
+    objc_method,
+    objc_property,
+)
 from toga_cocoa.colors import native_color
 from toga_cocoa.libs import (
     NSAttributedString,
@@ -1318,13 +1328,19 @@ class CodeEditor(MultilineTextInput):
         inset = self.native_text.textContainerInset
         text_length = self.native_text.textStorage.length
 
-        glyph_range = layout.glyphRangeForBoundingRect(visible, inTextContainer=container)
-        char_range = layout.characterRangeForGlyphRange(glyph_range, actualGlyphRange=None)
+        glyph_range = layout.glyphRangeForBoundingRect(
+            visible, inTextContainer=container
+        )
+        char_range = layout.characterRangeForGlyphRange(
+            glyph_range, actualGlyphRange=None
+        )
         first_line = max(bisect_right(self.line_starts, char_range.location) - 1, 0)
         last_char = char_range.location + char_range.length
         thickness = self.ruler.ruleThickness
 
-        for number, start in enumerate(self.line_starts[first_line:], start=first_line + 1):
+        for number, start in enumerate(
+            self.line_starts[first_line:], start=first_line + 1
+        ):
             if start > last_char:
                 break
             if start == text_length:
@@ -1780,7 +1796,9 @@ class CodeEditor(MultilineTextInput):
         base_color = self.native.textColor or UIColor.labelColor
         storage.beginEditing()
         # Reset to the base font and color, then paint each span.
-        storage.addAttribute(NSFontAttributeName, value=self.native.font, range=full_range)
+        storage.addAttribute(
+            NSFontAttributeName, value=self.native.font, range=full_range
+        )
         storage.addAttribute(
             NSForegroundColorAttributeName, value=base_color, range=full_range
         )
@@ -1830,12 +1848,18 @@ class CodeEditor(MultilineTextInput):
             CGPoint(bounds.origin.x - inset.left, bounds.origin.y - inset.top),
             bounds.size,
         )
-        glyph_range = layout.glyphRangeForBoundingRect(visible, inTextContainer=container)
-        char_range = layout.characterRangeForGlyphRange(glyph_range, actualGlyphRange=None)
+        glyph_range = layout.glyphRangeForBoundingRect(
+            visible, inTextContainer=container
+        )
+        char_range = layout.characterRangeForGlyphRange(
+            glyph_range, actualGlyphRange=None
+        )
         first_line = max(bisect_right(self.line_starts, char_range.location) - 1, 0)
         last_char = char_range.location + char_range.length
 
-        for number, start in enumerate(self.line_starts[first_line:], start=first_line + 1):
+        for number, start in enumerate(
+            self.line_starts[first_line:], start=first_line + 1
+        ):
             if start > last_char:
                 break
             if start == text_length:
@@ -1946,7 +1970,10 @@ class CodeEditor(MultilineTextInput):
         self.gutter.setGravity(Gravity.END | Gravity.TOP)
         self.gutter.setTextColor(self.native.getCurrentHintTextColor())
         self.gutter.setPadding(
-            padding, self.native.getPaddingTop(), padding, self.native.getPaddingBottom()
+            padding,
+            self.native.getPaddingTop(),
+            padding,
+            self.native.getPaddingBottom(),
         )
         self.sync_gutter_font()
 

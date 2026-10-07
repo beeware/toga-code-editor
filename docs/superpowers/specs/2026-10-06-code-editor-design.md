@@ -72,14 +72,14 @@ from toga_code_editor import CodeEditor, language_for_filename
 
 editor = CodeEditor(
     value=source,
-    language="python",        # Pygments lexer alias; None means no highlighting
+    language="python",  # Pygments lexer alias; None means no highlighting
     show_line_numbers=True,
-    theme=None,               # None means DEFAULT_THEME
+    theme=None,  # None means DEFAULT_THEME
     readonly=False,
     on_change=handle_edit,
 )
 
-editor.language = language_for_filename(path)   # "python" for foo.py, None if unknown
+editor.language = language_for_filename(path)  # "python" for foo.py, None if unknown
 ```
 
 **`language: str | None`.** A Pygments lexer alias. Setting it builds a new highlighter and re-highlights synchronously. An unknown alias raises `ValueError` naming the alias, before any state changes. `None` disables highlighting. The default is `None`; the widget never guesses a language.
@@ -105,22 +105,33 @@ Everything here lives in `highlighting.py` and runs in the interface layer.
 
 ```python
 class TokenKind(StrEnum):
-    TEXT, KEYWORD, BUILTIN, DEFINITION, DECORATOR, STRING, NUMBER,
+    (
+        TEXT,
+        KEYWORD,
+        BUILTIN,
+        DEFINITION,
+        DECORATOR,
+        STRING,
+        NUMBER,
+    )
     COMMENT, OPERATOR, PUNCTUATION, TAG, ATTRIBUTE, VARIABLE
+
 
 @dataclass(frozen=True)
 class Span:
-    start: int        # Python str index, inclusive
-    end: int          # Python str index, exclusive
+    start: int  # Python str index, inclusive
+    end: int  # Python str index, exclusive
     kind: TokenKind
+
 
 @dataclass(frozen=True)
 class Style:
-    color: Color      # accepts anything Toga color properties accept; normalized on construction
+    color: Color  # accepts anything Toga color properties accept; normalized on construction
     bold: bool = False
     italic: bool = False
 
-Theme = Mapping[TokenKind, Style]   # kinds absent from the theme are left unstyled
+
+Theme = Mapping[TokenKind, Style]  # kinds absent from the theme are left unstyled
 ```
 
 ### Pygments token mapping
