@@ -47,3 +47,18 @@ base_theme = "Theme.MaterialComponents.Light.DarkActionBar"
 build_gradle_dependencies = [
     "com.google.android.material:material:1.12.0",
 ]
+# Chaquopy serves Python modules from its asset archive and only extracts data files
+# to the filesystem, so a directory listing of resources/samples would never see
+# hello.py. Keep the app's sources uncompiled and extract the whole package to disk.
+build_gradle_extra_content = """
+android {
+    defaultConfig {
+        python {
+            pyc {
+                src false
+            }
+            extractPackages("editor")
+        }
+    }
+}
+"""
