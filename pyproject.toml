@@ -1,0 +1,120 @@
+[build-system]
+requires = ["setuptools >= 77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "toga-code-editor"
+version = "0.1.0.dev0"
+description = "A Toga widget for editing code, with line numbers and syntax highlighting."
+readme = "README.md"
+requires-python = ">= 3.11"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+authors = [{name = "Kattni", email = "hello@kattni.com"}]
+keywords = ["gui", "widget", "toga", "code", "editor", "syntax-highlighting"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: User Interfaces",
+    "Topic :: Software Development :: Widget Sets",
+]
+dependencies = [
+    "toga-core >= 0.5.7",
+    "pygments >= 2.19",
+]
+
+[project.entry-points."togax_code_editor.backend.toga_dummy"]
+CodeEditor = "toga_code_editor.dummy_code_editor:CodeEditor"
+
+[project.entry-points."togax_code_editor.backend.toga_cocoa"]
+CodeEditor = "toga_code_editor.cocoa_code_editor:CodeEditor"
+
+[project.entry-points."togax_code_editor.backend.toga_iOS"]
+CodeEditor = "toga_code_editor.iOS_code_editor:CodeEditor"
+
+[project.entry-points."togax_code_editor.backend.toga_android"]
+CodeEditor = "toga_code_editor.android_code_editor:CodeEditor"
+
+[dependency-groups]
+test = [
+    "coverage[toml]",
+    "pytest",
+    "pytest-asyncio",
+    "toga-dummy >= 0.5.7",
+]
+dev = [
+    {include-group = "test"},
+    "briefcase",
+    "pre-commit",
+    "tox",
+    "tox-uv",
+    "towncrier",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff.lint]
+extend-select = ["E", "W", "F", "UP", "B", "ASYNC", "C4", "I"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-first-party = ["toga_code_editor"]
+
+[tool.codespell]
+skip = ".git,.venv,.tox,*.lock"
+
+[tool.coverage.run]
+parallel = true
+branch = true
+relative_files = true
+source_pkgs = ["toga_code_editor"]
+omit = [
+    "*/toga_code_editor/cocoa_code_editor.py",
+    "*/toga_code_editor/iOS_code_editor.py",
+    "*/toga_code_editor/android_code_editor.py",
+]
+
+[tool.coverage.paths]
+source = ["src/toga_code_editor", "**/toga_code_editor"]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = ["error"]
+testpaths = ["tests"]
+
+[tool.towncrier]
+directory = "changes"
+package = "toga_code_editor"
+package_dir = "src"
+filename = "CHANGELOG.md"
+start_string = "<!-- towncrier release notes start -->\n"
+title_format = "## {version} ({project_date})"
+underlines = ["", "", ""]
+
+[[tool.towncrier.type]]
+directory = "feature"
+name = "Features"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bugfixes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "doc"
+name = "Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Misc"
+showcontent = false
