@@ -105,16 +105,19 @@ Everything here lives in `highlighting.py` and runs in the interface layer.
 
 ```python
 class TokenKind(StrEnum):
-    (
-        TEXT,
-        KEYWORD,
-        BUILTIN,
-        DEFINITION,
-        DECORATOR,
-        STRING,
-        NUMBER,
-    )
-    COMMENT, OPERATOR, PUNCTUATION, TAG, ATTRIBUTE, VARIABLE
+    TEXT = "text"
+    KEYWORD = "keyword"
+    BUILTIN = "builtin"
+    DEFINITION = "definition"
+    DECORATOR = "decorator"
+    STRING = "string"
+    NUMBER = "number"
+    COMMENT = "comment"
+    OPERATOR = "operator"
+    PUNCTUATION = "punctuation"
+    TAG = "tag"
+    ATTRIBUTE = "attribute"
+    VARIABLE = "variable"
 
 
 @dataclass(frozen=True)
