@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from functools import cached_property
 from typing import Any
 
@@ -137,11 +138,19 @@ class CodeEditor(toga.MultilineTextInput):
         """Called by the backend when the user edits the text.
 
         Re-lexing on every keystroke would be wasteful, so wait for a short pause.
+        This is a task rather than a bare ``call_later`` because Toga's Android event
+        loop only arms its next wakeup for work scheduled through ``call_soon``; a
+        timer added from a native callback would otherwise never fire.
         """
         self._cancel_pending_rehighlight()
-        self._pending_rehighlight = toga.App.app.loop.call_later(
-            REHIGHLIGHT_DELAY, self._rehighlight
+        self._pending_rehighlight = toga.App.app.loop.create_task(
+            self._rehighlight_after_delay()
         )
+
+    async def _rehighlight_after_delay(self) -> None:
+        await asyncio.sleep(REHIGHLIGHT_DELAY)
+        self._pending_rehighlight = None
+        self._rehighlight()
 
     def _cancel_pending_rehighlight(self) -> None:
         if self._pending_rehighlight is not None:
