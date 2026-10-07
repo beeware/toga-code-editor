@@ -1,7 +1,7 @@
 import asyncio
 
 import pytest
-from toga.fonts import MONOSPACE, SERIF
+from toga.fonts import MONOSPACE, SERIF, SYSTEM
 from toga.style import Pack
 from toga_dummy.utils import assert_action_performed, attribute_value
 
@@ -29,6 +29,7 @@ def test_defaults(app):
     [
         ({"font_family": SERIF}, [SERIF]),
         ({"style": Pack(font_family=SERIF)}, [SERIF]),
+        ({"style": Pack(font_family=SYSTEM)}, [SYSTEM]),
         ({"style": Pack(flex=1)}, [MONOSPACE]),
     ],
 )

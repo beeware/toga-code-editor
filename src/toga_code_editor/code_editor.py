@@ -4,7 +4,7 @@ from functools import cached_property
 from typing import Any
 
 import toga
-from toga.fonts import MONOSPACE, SYSTEM
+from toga.fonts import MONOSPACE
 from toga.platform import get_factory
 from toga.widgets.base import StyleT
 from toga.widgets.multilinetextinput import OnChangeHandler
@@ -55,7 +55,7 @@ class CodeEditor(toga.MultilineTextInput):
             on ``style``, the editor uses a monospace font.
         """
         if "font_family" not in kwargs and (
-            style is None or style.font_family == [SYSTEM]
+            style is None or "font_family" not in style
         ):
             kwargs["font_family"] = MONOSPACE
 
