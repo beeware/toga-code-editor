@@ -1,0 +1,45 @@
+[build-system]
+requires = ["briefcase"]
+
+[project]
+name = "editor"
+version = "0.0.1"
+
+[tool.briefcase]
+project_name = "Editor"
+bundle = "org.beeware.examples"
+version = "0.0.1"
+url = "https://beeware.org"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+author = "Kattni"
+author_email = "hello@kattni.com"
+description = "A code editor demonstrating the toga-code-editor widget."
+requires = [
+    "../..",
+]
+
+[tool.briefcase.app.editor]
+formal_name = "Editor"
+sources = ["src/editor"]
+
+[tool.briefcase.app.editor.macOS]
+requires = [
+    "toga-cocoa ~= 0.5.7",
+    "std-nslog >= 1.0.0",
+]
+
+[tool.briefcase.app.editor.iOS]
+requires = [
+    "toga-iOS ~= 0.5.7",
+    "std-nslog >= 1.0.0",
+]
+
+[tool.briefcase.app.editor.android]
+requires = [
+    "toga-android ~= 0.5.7",
+]
+base_theme = "Theme.MaterialComponents.Light.DarkActionBar"
+build_gradle_dependencies = [
+    "com.google.android.material:material:1.12.0",
+]

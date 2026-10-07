@@ -13,3 +13,4 @@ htmlcov/
 examples/editor/build/
 examples/editor/logs/
 .DS_Store
+*.dist-info/
