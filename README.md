@@ -1,3 +1,88 @@
 # toga-code-editor
 
-A [Toga](https://toga.beeware.org) widget for editing code, with line numbers and syntax highlighting. Supports macOS, iOS, and Android.
+A [Toga](https://toga.beeware.org) widget for editing code, with line numbers and syntax highlighting. `CodeEditor` is a `toga.MultilineTextInput` that colors its text with [Pygments](https://pygments.org) and shows a line-number gutter. It supports macOS, iOS, and Android.
+
+## Installation
+
+```console
+pip install toga-code-editor
+```
+
+The package depends on `toga-core` and `pygments`. Your app installs the Toga backend for its platform as usual; `toga-code-editor` contributes its implementation for that backend through entry points, the same way Toga's own widgets are found.
+
+## Usage
+
+```python
+import toga
+from toga_code_editor import CodeEditor, language_for_filename
+
+editor = CodeEditor(
+    value=source,
+    language="python",  # any Pygments lexer alias; None turns highlighting off
+    show_line_numbers=True,
+    on_change=handle_edit,
+    flex=1,
+)
+
+# Pick the language from a file name. Unknown files get None, which means no highlighting.
+editor.language = language_for_filename(path)
+```
+
+`CodeEditor` inherits everything from `toga.MultilineTextInput`, including `value`, `readonly`, `placeholder`, `on_change`, `scroll_to_top`, and `scroll_to_bottom`. It adds three properties:
+
+- `language`: a Pygments lexer alias such as `"python"`, `"rust"`, or `"json"`. Setting an unknown alias raises `ValueError`. `None` disables highlighting. The default is `None`.
+- `show_line_numbers`: shows or hides the gutter. Default `True`.
+- `theme`: a mapping from `TokenKind` to `Style`. `None` selects the built-in `DEFAULT_THEME`.
+
+Unless you give the widget a font family, it uses a monospace font. Autocorrect, smart quotes, smart dashes, auto-capitalization, and spell checking are always off.
+
+### Themes
+
+A theme is a plain mapping. Kinds you leave out are drawn in the widget's normal text color.
+
+```python
+from toga_code_editor import DEFAULT_THEME, Style, TokenKind
+
+theme = {
+    **DEFAULT_THEME,
+    TokenKind.COMMENT: Style("#6a737d", italic=True),
+    TokenKind.KEYWORD: Style("rebeccapurple", bold=True),
+}
+editor.theme = theme
+```
+
+`Style.color` accepts anything Toga's color properties accept. The token kinds are `KEYWORD`, `BUILTIN`, `DEFINITION`, `DECORATOR`, `STRING`, `NUMBER`, `COMMENT`, `OPERATOR`, `PUNCTUATION`, `TAG`, `ATTRIBUTE`, and `VARIABLE`.
+
+## Platform notes
+
+- **macOS** uses an `NSRulerView` for the gutter and the system's adaptive color mapping, so theme colors follow dark mode.
+- **iOS** and **Android** draw the gutter themselves. Theme colors do not change with the system appearance; the default theme is chosen to be legible on both light and dark backgrounds.
+- Highlighting re-lexes the whole buffer after a short pause in typing. Files of a few thousand lines are fine on a desktop; very large files are slower on phones.
+- Some third-party Android keyboards ignore the flag that disables suggestions.
+
+## Developing
+
+```console
+uv venv
+uv pip install -e . --group dev
+.venv/bin/tox -m test
+```
+
+The test suite runs against Toga's dummy backend. Real backends are checked with the example app in `examples/editor`:
+
+```console
+cd examples/editor
+briefcase dev            # macOS
+briefcase run iOS
+briefcase run android
+```
+
+On macOS and iOS the example installs the widget straight from this repository; add `-r` after changing the widget source so Briefcase reinstalls it. On Android the example installs the widget from a wheel in `dist/`, because Gradle rejects a path requirement whose directory contains the Android build tree. Build the wheel before each Android run that should pick up widget changes:
+
+```console
+uv build --wheel
+cd examples/editor
+briefcase run android -r
+```
+
+Every user-visible change needs a fragment in `changes/`, named `<issue>.<kind>.md` where kind is `feature`, `bugfix`, `doc`, or `misc`. Release notes are assembled with `towncrier build`.
