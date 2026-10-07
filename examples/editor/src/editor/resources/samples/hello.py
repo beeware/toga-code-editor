@@ -2,6 +2,8 @@
 
 import math
 
+WAVE = "👋 hi"  # an emoji in a string and one in a comment: 😀
+
 
 @staticmethod
 def area(radius: float) -> float:
