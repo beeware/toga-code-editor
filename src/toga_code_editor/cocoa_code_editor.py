@@ -122,6 +122,11 @@ class CodeEditor(MultilineTextInput):
             object=self.native.contentView,
         )
 
+        # NSTextView.font and .textColor read back the *first character's* attributes
+        # once the storage is styled, so the base style is tracked here instead.
+        self.base_font = self.native_text.font
+        self.base_color = NSColor.textColor
+
         self.theme = {}
         self.attributes = {}
         self.spans = []
@@ -137,12 +142,14 @@ class CodeEditor(MultilineTextInput):
 
     def set_font(self, font):
         super().set_font(font)
+        self.base_font = font._impl.native
         self.rebuild_attributes()
         self.apply_highlights()
         self.text_changed()
 
     def set_color(self, value):
         super().set_color(value)
+        self.base_color = native_color(value) or NSColor.textColor
         self.apply_highlights()
 
     # CodeEditor backend contract
@@ -161,7 +168,7 @@ class CodeEditor(MultilineTextInput):
     # Highlighting
 
     def rebuild_attributes(self):
-        base_font = self.native_text.font
+        base_font = self.base_font
         manager = NSFontManager.sharedFontManager
         self.attributes = {}
         for kind, style in self.theme.items():
@@ -184,12 +191,10 @@ class CodeEditor(MultilineTextInput):
         storage.beginEditing()
         # Reset to the base font and color, then paint each span.
         storage.addAttribute(
-            NSFontAttributeName, value=self.native_text.font, range=full_range
+            NSFontAttributeName, value=self.base_font, range=full_range
         )
-        # A fresh NSTextView has no textColor; nil would throw inside AppKit.
-        base_color = self.native_text.textColor or NSColor.textColor
         storage.addAttribute(
-            NSForegroundColorAttributeName, value=base_color, range=full_range
+            NSForegroundColorAttributeName, value=self.base_color, range=full_range
         )
         for span in to_utf16_spans(self.get_value(), self.spans):
             attributes = self.attributes.get(span.kind)
@@ -212,7 +217,7 @@ class CodeEditor(MultilineTextInput):
 
     def gutter_label(self, text):
         attributes = NSMutableDictionary.alloc().init()
-        attributes[NSFontAttributeName] = self.native_text.font
+        attributes[NSFontAttributeName] = self.base_font
         attributes[NSForegroundColorAttributeName] = NSColor.secondaryLabelColor
         return NSAttributedString.alloc().initWithString(text, attributes=attributes)
 
