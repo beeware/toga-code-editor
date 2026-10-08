@@ -85,9 +85,9 @@ class CodeEditor(toga.MultilineTextInput):
     @cached_property
     def factory(self):
         # This is an official BeeWare external widget, so its interface group uses the
-        # "toga_" prefix. Toga warns about any "toga_" interface it has not registered
-        # in toga.platform._TOGA_INTERFACES; keep that one warning out of every app's
-        # output until the Toga release that registers "toga_code_editor".
+        # "toga_" prefix. Toga currently warns about any "toga_" interface it does not
+        # know. Until Toga provides a way to register external widgets, swallow that
+        # one warning here rather than letting every app print it at startup.
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore",
