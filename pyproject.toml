@@ -11,6 +11,7 @@ requires-python = ">= 3.11"
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
 authors = [{name = "Kattni", email = "hello@kattni.com"}]
+maintainers = [{name = "BeeWare Team", email = "team@beeware.org"}]
 keywords = ["gui", "widget", "toga", "code", "editor", "syntax-highlighting"]
 classifiers = [
     "Development Status :: 3 - Alpha",
