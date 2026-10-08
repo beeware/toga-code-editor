@@ -25,16 +25,16 @@ dependencies = [
     "pygments >= 2.19",
 ]
 
-[project.entry-points."togax_code_editor.backend.toga_dummy"]
+[project.entry-points."toga_code_editor.backend.toga_dummy"]
 CodeEditor = "toga_code_editor.dummy_code_editor:CodeEditor"
 
-[project.entry-points."togax_code_editor.backend.toga_cocoa"]
+[project.entry-points."toga_code_editor.backend.toga_cocoa"]
 CodeEditor = "toga_code_editor.cocoa_code_editor:CodeEditor"
 
-[project.entry-points."togax_code_editor.backend.toga_iOS"]
+[project.entry-points."toga_code_editor.backend.toga_iOS"]
 CodeEditor = "toga_code_editor.iOS_code_editor:CodeEditor"
 
-[project.entry-points."togax_code_editor.backend.toga_android"]
+[project.entry-points."toga_code_editor.backend.toga_android"]
 CodeEditor = "toga_code_editor.android_code_editor:CodeEditor"
 
 [dependency-groups]

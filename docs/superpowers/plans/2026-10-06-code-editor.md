@@ -4,7 +4,7 @@
 
 **Goal:** Build `toga-code-editor`, a standalone Toga widget package providing `CodeEditor`, a multi-line text input with line numbers and Pygments-driven syntax highlighting, on Cocoa, iOS, and Android.
 
-**Architecture:** The interface layer (`code_editor.py`) tokenizes text through Pygments into a flat list of `Span` objects and hands them to a backend through three methods: `set_theme`, `set_highlights`, `set_show_line_numbers`. Each backend module subclasses that Toga backend's `MultilineTextInput` implementation, paints spans onto the native attributed text, and draws a line-number gutter. Backends are discovered through `togax_code_editor.backend.<backend>` entry points, the mechanism Toga provides for third-party widgets.
+**Architecture:** The interface layer (`code_editor.py`) tokenizes text through Pygments into a flat list of `Span` objects and hands them to a backend through three methods: `set_theme`, `set_highlights`, `set_show_line_numbers`. Each backend module subclasses that Toga backend's `MultilineTextInput` implementation, paints spans onto the native attributed text, and draws a line-number gutter. Backends are discovered through `toga_code_editor.backend.<backend>` entry points, the mechanism Toga provides for third-party widgets.
 
 **Tech Stack:** Python 3.11+, toga-core 0.5.7+, Pygments, toga-dummy for tests, pytest with pytest-asyncio, ruff, tox with tox-uv, Briefcase for the example app.
 
@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Distribution name `toga-code-editor`, import package `toga_code_editor`, entry-point interface group `togax_code_editor`, widget class `CodeEditor`.
+- Distribution name `toga-code-editor`, import package `toga_code_editor`, entry-point interface group `toga_code_editor`, widget class `CodeEditor`.
 - Runtime dependencies: `toga-core >= 0.5.7` and `pygments`. No Toga backend is a dependency of the package.
 - `requires-python = ">= 3.11"`, matching toga-core 0.5.7. License BSD-3-Clause.
 - Backends in this cut: Cocoa, iOS, Android, plus Dummy for tests. No other backend gets an entry point.
@@ -117,16 +117,16 @@ dependencies = [
     "pygments >= 2.19",
 ]
 
-[project.entry-points."togax_code_editor.backend.toga_dummy"]
+[project.entry-points."toga_code_editor.backend.toga_dummy"]
 CodeEditor = "toga_code_editor.dummy_code_editor:CodeEditor"
 
-[project.entry-points."togax_code_editor.backend.toga_cocoa"]
+[project.entry-points."toga_code_editor.backend.toga_cocoa"]
 CodeEditor = "toga_code_editor.cocoa_code_editor:CodeEditor"
 
-[project.entry-points."togax_code_editor.backend.toga_iOS"]
+[project.entry-points."toga_code_editor.backend.toga_iOS"]
 CodeEditor = "toga_code_editor.iOS_code_editor:CodeEditor"
 
-[project.entry-points."togax_code_editor.backend.toga_android"]
+[project.entry-points."toga_code_editor.backend.toga_android"]
 CodeEditor = "toga_code_editor.android_code_editor:CodeEditor"
 
 [dependency-groups]
@@ -983,7 +983,7 @@ class CodeEditor(toga.MultilineTextInput):
 
     @cached_property
     def factory(self):
-        return get_factory("togax_code_editor")
+        return get_factory("toga_code_editor")
 
     def _create(self) -> Any:
         return self.factory.CodeEditor(interface=self)
@@ -1077,7 +1077,7 @@ __all__ = [
 
 Run: `.venv/bin/coverage run -m pytest -v && .venv/bin/coverage combine && .venv/bin/coverage report`
 
-Expected: all tests pass and the report ends without a `fail_under` error. The entry point is read from the installed metadata, so if `test_defaults` fails with `NotImplementedError: The 'toga_dummy' backend for the togax_code_editor interface doesn't implement CodeEditor`, re-run `uv pip install -e . --group dev` to refresh the metadata and run again.
+Expected: all tests pass and the report ends without a `fail_under` error. The entry point is read from the installed metadata, so if `test_defaults` fails with `NotImplementedError: The 'toga_dummy' backend for the toga_code_editor interface doesn't implement CodeEditor`, re-run `uv pip install -e . --group dev` to refresh the metadata and run again.
 
 - [ ] **Step 7: Run pre-commit and commit**
 

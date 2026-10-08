@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import warnings
 from functools import cached_property
 from typing import Any
 
@@ -83,7 +84,17 @@ class CodeEditor(toga.MultilineTextInput):
 
     @cached_property
     def factory(self):
-        return get_factory("togax_code_editor")
+        # This is an official BeeWare external widget, so its interface group uses the
+        # "toga_" prefix. Toga warns about any "toga_" interface it has not registered
+        # in toga.platform._TOGA_INTERFACES; keep that one warning out of every app's
+        # output until the Toga release that registers "toga_code_editor".
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="Unrecognized official Toga interface",
+                category=RuntimeWarning,
+            )
+            return get_factory("toga_code_editor")
 
     def _create(self) -> Any:
         return self.factory.CodeEditor(interface=self)

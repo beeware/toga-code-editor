@@ -8,7 +8,7 @@ Build `CodeEditor`, a Toga widget for a code-editor app. It is a plain multi-lin
 
 ## Decisions already made
 
-- **Standalone package, not toga-core.** Toga's `Factory` loads third-party widgets from `togax_<name>.backend.<backend>` entry points, and the widget overrides its `factory` property to use them. toga_bitmap_view and Toga's `examples/customwidget` both use this mechanism, including on iOS and Android under Briefcase. A standalone package supports three backends without the parity, deprecation, and dependency obligations that Toga's constitution attaches to core widgets.
+- **Standalone package, not toga-core.** Toga's `Factory` loads external widgets from `<interface>.backend.<backend>` entry points, and the widget overrides its `factory` property to use them. toga_bitmap_view and Toga's `examples/customwidget` both use this mechanism, including on iOS and Android under Briefcase. A standalone package supports three backends without the parity, deprecation, and dependency obligations that Toga's constitution attaches to core widgets.
 - **The interface layer tokenizes; backends paint.** Core produces a list of styled spans and backends apply them to native attributed text. Backends never see a language name. Cocoa, iOS, and Android ship no native source highlighter, so there is no native alternative to lean on.
 - **Pygments is the tokenizer.** It is pure Python, BSD licensed, lexes several hundred languages, and runs under Briefcase on mobile. The package depends on it directly.
 - **Subclass the existing `MultilineTextInput` implementations.** Each backend module subclasses its backend's multiline text implementation and adds highlighting and a gutter. This is the pattern Toga's extending-toga guide shows for a Qt dial built on the Slider implementation.
@@ -21,7 +21,7 @@ Out of this cut: code folding, completion, search and replace, minimap, a wrap o
 
 ## Package identity and layout
 
-Distribution `toga-code-editor`, import package `toga_code_editor`, entry-point interface group `togax_code_editor`, widget class `CodeEditor`. The names mirror toga_bitmap_view.
+Distribution `toga-code-editor`, import package `toga_code_editor`, entry-point interface group `toga_code_editor`, widget class `CodeEditor`. The `toga_` prefix marks an official BeeWare external widget. Toga warns about any `toga_` interface it has not registered in its official set, so the widget suppresses that one warning until the Toga release that registers `toga_code_editor`.
 
 ```text
 toga-code-editor/
@@ -40,21 +40,21 @@ toga-code-editor/
   README.md, LICENSE, CHANGELOG.md
 ```
 
-Runtime dependencies: `toga-core >= 0.5.7` and `pygments`. The `togax_` factory shipped in Toga 0.5.4, but the pin is 0.5.7 because the package subclasses internal backend classes and supports only the versions it has been tested against. Raise the floor deliberately when a new Toga release lands. No Toga backend is a dependency of the package; the app declares its platform backend as usual.
+Runtime dependencies: `toga-core >= 0.5.7` and `pygments`. The entry-point factory shipped in Toga 0.5.4, but the pin is 0.5.7 because the package subclasses internal backend classes and supports only the versions it has been tested against. Raise the floor deliberately when a new Toga release lands. No Toga backend is a dependency of the package; the app declares its platform backend as usual.
 
 Entry points, one table per backend:
 
 ```toml
-[project.entry-points."togax_code_editor.backend.toga_cocoa"]
+[project.entry-points."toga_code_editor.backend.toga_cocoa"]
 CodeEditor = "toga_code_editor.cocoa_code_editor:CodeEditor"
 
-[project.entry-points."togax_code_editor.backend.toga_iOS"]
+[project.entry-points."toga_code_editor.backend.toga_iOS"]
 CodeEditor = "toga_code_editor.iOS_code_editor:CodeEditor"
 
-[project.entry-points."togax_code_editor.backend.toga_android"]
+[project.entry-points."toga_code_editor.backend.toga_android"]
 CodeEditor = "toga_code_editor.android_code_editor:CodeEditor"
 
-[project.entry-points."togax_code_editor.backend.toga_dummy"]
+[project.entry-points."toga_code_editor.backend.toga_dummy"]
 CodeEditor = "toga_code_editor.dummy_code_editor:CodeEditor"
 ```
 
