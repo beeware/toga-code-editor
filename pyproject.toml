@@ -130,17 +130,7 @@ extend-select = [
 ]
 
 ignore = [
-    # PEP8 module naming conventions aren't appropriate
-    # "N999",
     # The SIM rules are *very* opinionated, and don't necessarily make for better code.
-    # "SIM105",  # use `contextlib.suppress`
-    # "SIM108",  # replace if-else with ternary operator
-    # # These ignores should be fixed, if possible
-    # "DTZ001",
-    # "DTZ002",
-    # "DTZ005",
-    # "DTZ007",
-    # "DTZ011",
 ]
 
 [tool.ruff.lint.isort]
