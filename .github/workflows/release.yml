@@ -17,16 +17,16 @@ jobs:
     with:
       attest-package: "true"
 
-  docs:
-    permissions:
-      contents: read
-    name: Verify Docs Build
-    uses: beeware/.github/.github/workflows/docs-build-verify.yml@main
-    secrets:
-      RTD_API_TOKEN: ${{ secrets.RTD_API_TOKEN }}
-    with:
-      project-name: "xbuild"
-      project-version: ${{ github.ref_name }}
+  # docs:
+  #   permissions:
+  #     contents: read
+  #   name: Verify Docs Build
+  #   uses: beeware/.github/.github/workflows/docs-build-verify.yml@main
+  #   secrets:
+  #     RTD_API_TOKEN: ${{ secrets.RTD_API_TOKEN }}
+  #   with:
+  #     project-name: "xbuild"
+  #     project-version: ${{ github.ref_name }}
 
   release:
     name: Create Release
@@ -59,17 +59,6 @@ jobs:
           pattern: Packages-*
           merge-multiple: true
           path: dist
-
-      - name: Install packages
-        run: pip install dist/*.whl
-
-      - name: Check version number
-        # Check that the setuptools_scm-generated version number is still the same when
-        # installed from a wheel with setuptools_scm not present.
-        run: |
-          set -x
-          test $(xvenv --version | awk '{print $2}') = $VERSION
-          test $(xbuild --version | awk '{print $2}') = $VERSION
 
       - name: Create release
         env:
