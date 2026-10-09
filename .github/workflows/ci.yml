@@ -88,7 +88,7 @@ jobs:
     - name: Test
       id: test
       run: |
-        python -m tox -e py-cov --installpkg dist/toga-code-editor-*.whl
+        python -m tox -e py-cov --installpkg dist/toga_code_editor-*.whl
 
     - name: Store Coverage Data
       if: always() && (steps.test.outcome == 'success' || steps.test.outcome == 'failure')
