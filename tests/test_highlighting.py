@@ -51,7 +51,7 @@ def test_utf16_offsets():
 
 
 @pytest.mark.parametrize(
-    "name, expected",
+    ("name", "expected"),
     [("foo.py", "python"), ("Makefile", "make"), ("notes.xyz", None)],
 )
 def test_language_for_filename(name, expected):
