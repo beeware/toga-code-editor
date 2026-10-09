@@ -35,16 +35,16 @@ dependencies = [
 ]
 
 [project.entry-points."toga_code_editor.backend.toga_dummy"]
-CodeEditor = "toga_code_editor.dummy_code_editor:CodeEditor"
+CodeEditor = "toga_code_editor.platforms.dummy:CodeEditor"
 
 [project.entry-points."toga_code_editor.backend.toga_cocoa"]
-CodeEditor = "toga_code_editor.cocoa_code_editor:CodeEditor"
+CodeEditor = "toga_code_editor.platforms.cocoa:CodeEditor"
 
 [project.entry-points."toga_code_editor.backend.toga_iOS"]
-CodeEditor = "toga_code_editor.iOS_code_editor:CodeEditor"
+CodeEditor = "toga_code_editor.platforms.iOS:CodeEditor"
 
 [project.entry-points."toga_code_editor.backend.toga_android"]
-CodeEditor = "toga_code_editor.android_code_editor:CodeEditor"
+CodeEditor = "toga_code_editor.platforms.android:CodeEditor"
 
 [dependency-groups]
 # Extras used by developers *of* briefcase are pinned to specific versions to
@@ -89,9 +89,9 @@ branch = true
 relative_files = true
 source_pkgs = ["toga_code_editor"]
 omit = [
-    "*/toga_code_editor/cocoa_code_editor.py",
-    "*/toga_code_editor/iOS_code_editor.py",
-    "*/toga_code_editor/android_code_editor.py",
+    "*/toga_code_editor/platforms/cocoa.py",
+    "*/toga_code_editor/platforms/iOS.py",
+    "*/toga_code_editor/platforms/android.py",
 ]
 
 [tool.coverage.paths]
@@ -139,7 +139,7 @@ known-first-party = ["toga_code_editor"]
 
 [tool.ruff.lint.per-file-ignores]
 # The module is named after the toga_iOS backend it implements.
-"src/toga_code_editor/iOS_code_editor.py" = ["N999"]
+"src/toga_code_editor/platforms/iOS.py" = ["N999"]
 # The example code can have print statements
 "examples/editor/src/editor/resources/samples/hello.py" = ["T201"]
 
