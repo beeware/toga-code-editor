@@ -144,13 +144,12 @@ jobs:
     - name: Platform Coverage Reports
       id: platform-coverage
       run: |
-        tox --parallel-no-spinner -qe \
-          coverage-ci-platform-linux,coverage-ci-platform-macos,coverage-ci-platform-windows
+        tox --parallel-no-spinner -qe coverage
 
     - name: Project Coverage Report
       id: project-coverage
       if: always()
-      run: tox -qe coverage-ci-project-html
+      run: tox -qe coverage-html
 
     - name: Upload Project Coverage HTML Report
       if: always() && steps.project-coverage.outcome == 'failure'
