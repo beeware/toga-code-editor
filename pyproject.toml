@@ -193,7 +193,7 @@ package = "toga_code_editor"
 package_dir = "src"
 filename = "CHANGELOG.md"
 title_format = "## {version} ({project_date})"
-issue_format = "[#{issue}](https://github.com/beeware/briefcase/issues/{issue})"
+issue_format = "[#{issue}](https://github.com/beeware/toga-code-editor/issues/{issue})"
 template = "changes/template.md"
 type = [
     { directory = "feature", name = "Features", showcontent = true },

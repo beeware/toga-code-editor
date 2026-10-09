@@ -48,7 +48,7 @@ jobs:
       tox-source: "--group tox"
 
   package:
-    name: Package xbuild
+    name: Package toga-code-editor
     needs: [ pre-commit, towncrier ]
     permissions:
       id-token: write
