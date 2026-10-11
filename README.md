@@ -70,6 +70,8 @@ uv pip install -e . --group dev
 .venv/bin/tox -m test
 ```
 
+On Windows the virtual environment's scripts are in `.venv\Scripts` rather than `.venv/bin`; activate it with `.venv\Scripts\activate` before running `tox` or `briefcase`.
+
 The test suite runs against Toga's dummy backend. Real backends are checked with the example app in `examples/editor`:
 
 ```console
