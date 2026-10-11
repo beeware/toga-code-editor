@@ -53,6 +53,9 @@ class TogaCodeTextEdit(QPlainTextEdit):
 
     def draw_line_numbers(self, event):
         painter = QPainter(self.gutter)
+        # Paint the strip, so the gutter looks the same whatever sits behind the
+        # editor.
+        painter.fillRect(event.rect(), self.palette().color(QPalette.ColorRole.Window))
         painter.setFont(self.font())
         painter.setPen(self.palette().color(QPalette.ColorRole.PlaceholderText))
         height = self.fontMetrics().height()
@@ -184,7 +187,8 @@ class CodeEditor(MultilineTextInput):
             )
         else:
             width = 0
-        self.native.set_gutter_width(width)
+        if width != self.native.gutter_width:
+            self.native.set_gutter_width(width)
 
     def qt_on_block_count_changed(self, count):
         self.update_gutter_width()

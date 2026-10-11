@@ -8,11 +8,12 @@ GUTTER_PADDING = 6
 
 class CodeEditor(MultilineTextInput):
     def create(self):
+        self.setting_value = False
+
         # Toga builds the scrolled window, the text view, the content buffer, and the
         # placeholder buffer, and connects the content buffer's "changed" signal to
         # gtk_on_changed through a weak reference to the bound method, so the
         # override below is what gets connected.
-        self.setting_value = False
         super().create()
 
         # Highlights are text tags on the content buffer, one per token kind.
@@ -29,15 +30,19 @@ class CodeEditor(MultilineTextInput):
     # Inherited MultilineTextInput methods that must keep the gutter in sync
 
     def set_value(self, value):
-        # Toga's set_value spins the GTK main loop until the buffer change has
-        # settled. An asyncio task created inside that spin is never dispatched and
-        # keeps the spin alive, so skip the debounce for programmatic changes; the
-        # interface re-highlights synchronously right after set_value.
+        # Toga's set_value ends by spinning the GTK main loop until no events are
+        # pending. The buffer's "changed" signal fires inside set_text, before that
+        # spin. During startup, before Toga's asyncio loop has run its first
+        # iteration, a task created there is never dispatched by those nested
+        # iterations and keeps them pending forever, so the editor hung on its first
+        # non-empty value. Skip the debounce for programmatic changes; the interface
+        # re-highlights synchronously right after set_value, so nothing is lost.
+        previous = self.setting_value
         self.setting_value = True
         try:
             super().set_value(value)
         finally:
-            self.setting_value = False
+            self.setting_value = previous
 
     def gtk_on_changed(self, *args):
         # The re-highlight is scheduled before the user's handler runs, as on the
@@ -46,10 +51,6 @@ class CodeEditor(MultilineTextInput):
             self.interface._schedule_rehighlight()
         super().gtk_on_changed(*args)
         self.native_textview.queue_draw()
-
-    def set_font(self, font):
-        super().set_font(font)
-        self.update_gutter_width()
 
     # CodeEditor backend contract
 
@@ -115,11 +116,11 @@ class CodeEditor(MultilineTextInput):
         Gtk.cairo_transform_to_window(cr, view, window)
         cr.rectangle(0, 0, window.get_width(), window.get_height())
         cr.clip()
-        self.draw_line_numbers(view, cr)
+        self.draw_line_numbers(view, cr, window.get_width())
         cr.restore()
         return False
 
-    def draw_line_numbers(self, view, cr):
+    def draw_line_numbers(self, view, cr, width):
         # Number the lines of whatever buffer the view displays. With the
         # placeholder shown, that is its single line, which reads as line 1 of an
         # empty document.
@@ -146,7 +147,8 @@ class CodeEditor(MultilineTextInput):
                 break
             _, window_y = view.buffer_to_window_coords(Gtk.TextWindowType.LEFT, 0, y)
             layout = view.create_pango_layout(str(line + 1))
-            width, _ = layout.get_pixel_size()
-            cr.move_to(self.gutter_width - GUTTER_PADDING - width, window_y)
+            label_width, _ = layout.get_pixel_size()
+            # Align to the window as it is now; a queued resize may still be pending.
+            cr.move_to(width - GUTTER_PADDING - label_width, window_y)
             PangoCairo.show_layout(cr, layout)
             line += 1
