@@ -12,6 +12,7 @@ class CodeEditor(MultilineTextInput):
         # placeholder buffer, and connects the content buffer's "changed" signal to
         # gtk_on_changed through a weak reference to the bound method, so the
         # override below is what gets connected.
+        self.setting_value = False
         super().create()
 
         # Highlights are text tags on the content buffer, one per token kind.
@@ -27,10 +28,22 @@ class CodeEditor(MultilineTextInput):
 
     # Inherited MultilineTextInput methods that must keep the gutter in sync
 
+    def set_value(self, value):
+        # Toga's set_value spins the GTK main loop until the buffer change has
+        # settled. An asyncio task created inside that spin is never dispatched and
+        # keeps the spin alive, so skip the debounce for programmatic changes; the
+        # interface re-highlights synchronously right after set_value.
+        self.setting_value = True
+        try:
+            super().set_value(value)
+        finally:
+            self.setting_value = False
+
     def gtk_on_changed(self, *args):
         # The re-highlight is scheduled before the user's handler runs, as on the
         # other backends.
-        self.interface._schedule_rehighlight()
+        if not self.setting_value:
+            self.interface._schedule_rehighlight()
         super().gtk_on_changed(*args)
         self.native_textview.queue_draw()
 
