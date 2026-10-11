@@ -37,6 +37,7 @@ EM_SETEVENTMASK = WM_USER + 69
 EM_GETSCROLLPOS = WM_USER + 221
 EM_SETSCROLLPOS = WM_USER + 222
 ENM_CHANGE = 0x00000001
+ENM_SELCHANGE = 0x00000002
 
 # Text Object Model, from tom.h: the ITextDocument.Undo arguments, and the vtable
 # slots of the methods used here. IUnknown fills slots 0 to 2 and IDispatch 3 to 6.
@@ -70,11 +71,14 @@ IID_ITEXTDOCUMENT = GUID(
     (c_ubyte * 8)(0x80, 0x98, 0x00, 0xAA, 0x00, 0x47, 0xBE, 0x5D),
 )
 
-# COM method prototypes; the first argument is always the interface pointer.
+# COM method prototypes; the first argument is always the interface pointer. The
+# document methods declare a plain integer result rather than HRESULT, so ctypes
+# never raises from them: the paint's restore chain must run to its end whatever
+# they report, and none of them fails on a live control.
 QUERY_INTERFACE = WINFUNCTYPE(HRESULT, c_void_p, POINTER(GUID), POINTER(c_void_p))
 RELEASE = WINFUNCTYPE(c_ulong, c_void_p)
-COUNT_METHOD = WINFUNCTYPE(HRESULT, c_void_p, POINTER(c_long))  # Freeze, Unfreeze
-UNDO_METHOD = WINFUNCTYPE(HRESULT, c_void_p, c_long, POINTER(c_long))
+COUNT_METHOD = WINFUNCTYPE(c_long, c_void_p, POINTER(c_long))  # Freeze, Unfreeze
+UNDO_METHOD = WINFUNCTYPE(c_long, c_void_p, c_long, POINTER(c_long))
 
 
 def com_method(interface, slot, prototype):
@@ -129,7 +133,10 @@ class CodeEditor(MultilineTextInput):
         self.native.AcceptsTab = True  # Tab inserts a tab, as on macOS
         self.native.RichTextShortcutsEnabled = False  # Ctrl+E and friends realign
         self.native.Dock = WinForms.DockStyle.Fill
+        # VScroll covers the scroll bar and the wheel; the caret moving the view,
+        # as with Page Down, reports a selection change instead.
         self.native.VScroll += WeakrefCallable(self.winforms_gutter_stale)
+        self.native.SelectionChanged += WeakrefCallable(self.winforms_gutter_stale)
         self.native.Resize += WeakrefCallable(self.winforms_gutter_stale)
         self.native.KeyDown += WeakrefCallable(self.winforms_key_down)
         self.native.HandleCreated += WeakrefCallable(self.winforms_handle_created)
@@ -301,12 +308,13 @@ class CodeEditor(MultilineTextInput):
         selection = (native.SelectionStart, native.SelectionLength)
         scroll = POINT()
         SendMessageW(hwnd, EM_GETSCROLLPOS, 0, byref(scroll))
-        # Formatting raises TextChanged, and the handler above streams the buffer
-        # out to compare it. Silence the notification for the duration.
         mask = SendMessageW(hwnd, EM_GETEVENTMASK, 0, 0)
-        SendMessageW(hwnd, EM_SETEVENTMASK, 0, mask & ~ENM_CHANGE)
-        self.document.freeze()
         try:
+            # Formatting raises TextChanged, whose handler streams the buffer out to
+            # compare it, and every Select raises SelectionChanged. Silence both for
+            # the duration.
+            SendMessageW(hwnd, EM_SETEVENTMASK, 0, mask & ~(ENM_CHANGE | ENM_SELCHANGE))
+            self.document.freeze()
             # Formatting would otherwise land on the undo stack ahead of the typing.
             self.document.suspend_undo()
             # Reset to the base font and color, then paint each span.
@@ -322,11 +330,14 @@ class CodeEditor(MultilineTextInput):
                 if font is not None:
                     native.SelectionFont = font
         finally:
+            # The notifications come back before the selection is restored, so
+            # WinForms sees that change, and the selection goes back before the view
+            # thaws, since RichEdit scrolls to the selection at that point.
             self.document.resume_undo()
-            self.document.unfreeze()
-            native.Select(*selection)
-            SendMessageW(hwnd, EM_SETSCROLLPOS, 0, byref(scroll))
             SendMessageW(hwnd, EM_SETEVENTMASK, 0, mask)
+            native.Select(*selection)
+            self.document.unfreeze()
+            SendMessageW(hwnd, EM_SETSCROLLPOS, 0, byref(scroll))
             # A bold or italic span can re-wrap a line.
             self.gutter.Invalidate()
 
