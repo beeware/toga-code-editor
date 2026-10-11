@@ -56,7 +56,7 @@ editor.theme = theme
 - **Windows** paints the gutter beside a `RichTextBox` and colors text through RichEdit's character formatting, with undo recording suspended while it paints, so Ctrl+Z still undoes typing. Theme colors do not change with the system appearance; WinForms draws the editor light. Tab inserts a tab, and Ctrl+V pastes plain text.
 - **Android** 12 and later are supported. The example app is checked on Android 12 and Android 15 emulators.
 - **iOS**, **Android**, **GTK**, and **Qt** draw the gutter themselves. Theme colors do not change with the system appearance; the default theme is chosen to be legible on both light and dark backgrounds. On GTK the gutter background follows the theme's styling for text view borders.
-- **Linux** needs GTK 3 for the GTK backend; Toga 0.5.7 has no working multiline text input on GTK 4 yet. The Qt backend uses PySide6. Both backends register as the `linux` platform, so an app that installs both must set `TOGA_BACKEND` to `toga_gtk` or `toga_qt`.
+- **Linux** needs GTK 3 for the GTK backend; Toga 0.5.7 has no working multiline text input on GTK 4 yet. The Qt backend uses PySide6. Both backends register as the `linux` platform, so an app that installs both must set `TOGA_BACKEND` to `toga_gtk` or `toga_qt`. Both backends were checked on Ubuntu 26.04.
 - Highlighting re-lexes the whole buffer after a short pause in typing. Files of a few thousand lines are fine on a desktop; very large files are slower on phones.
 - Some third-party Android keyboards ignore the flag that disables suggestions.
 - On Android, the widget asks the window to shrink its content when the soft keyboard appears, so the editor scrolls internally and the rest of the layout stays put. It only does this when the app has not chosen a soft-input mode itself. Android deprecated that request in API 30 in favour of handling window insets, so a future release may stop honouring it. With Briefcase's current template, which targets SDK 36 and enables edge-to-edge drawing, the layout still shrinks for the keyboard on Android 12 and Android 15 emulators.
@@ -88,7 +88,7 @@ cd examples/editor
 briefcase run android -r
 ```
 
-On Linux, `briefcase dev` installs `toga-gtk`, whose PyGObject dependency builds against the system GTK libraries. On Ubuntu 24.04 or later and Debian 13 or later, install `pkg-config python3-dev libgirepository-2.0-dev libcairo2-dev gir1.2-gtk-3.0 libcanberra-gtk3-module` first; on Fedora, install `pkg-config python3-devel gobject-introspection-devel cairo-gobject-devel gtk3 libcanberra-gtk3`. Toga's Linux platform documentation has the packages for other distributions. The Qt backend runs from its own virtual environment, because Toga refuses to guess when both Linux backends are installed:
+On Linux, `briefcase dev` installs `toga-gtk`, which builds PyGObject and pycairo from source, so it needs a compiler and the GLib, GObject Introspection, and cairo development packages. On Ubuntu 24.04 or later and Debian 13 or later, install `build-essential pkg-config python3-dev libgirepository-2.0-dev libcairo2-dev gir1.2-gtk-3.0 libcanberra-gtk3-module` first; on Fedora, install `gcc pkg-config python3-devel gobject-introspection-devel cairo-gobject-devel gtk3 libcanberra-gtk3`. Toga's Linux platform documentation has the packages for other distributions. The Qt backend runs from its own virtual environment, because Toga refuses to guess when both Linux backends are installed:
 
 ```console
 cd examples/editor
@@ -96,6 +96,8 @@ uv venv .venv-qt
 uv pip install --python .venv-qt/bin/python -e ../.. "toga-qt[pyside6-essentials] ~= 0.5.7"
 TOGA_BACKEND=toga_qt PYTHONPATH=src .venv-qt/bin/python -m editor
 ```
+
+On a Wayland session Qt uses its Wayland plugin and needs nothing more. On an X11 session, PySide6's X11 plugin also needs `libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-xinerama0 libxcb-xkb1 libxkbcommon-x11-0` on Ubuntu, which a stock desktop install lacks.
 
 Every user-visible change needs a fragment in `changes/`, named `<issue>.<kind>.md` where kind is `feature`, `bugfix`, `doc`, or `misc`. Release notes are assembled with `towncrier build`.
 
