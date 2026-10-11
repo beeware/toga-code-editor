@@ -89,9 +89,7 @@ class CodeEditor(MultilineTextInput):
         if width != self.gutter_width:
             self.gutter_width = width
             # A width of zero removes the window.
-            self.native_textview.set_border_window_size(
-                Gtk.TextWindowType.LEFT, width
-            )
+            self.native_textview.set_border_window_size(Gtk.TextWindowType.LEFT, width)
 
     def gtk_on_draw(self, view, cr):
         window = view.get_window(Gtk.TextWindowType.LEFT)
@@ -113,9 +111,14 @@ class CodeEditor(MultilineTextInput):
         # placeholder shown, that is its single line, which reads as line 1 of an
         # empty document.
         buffer = view.get_buffer()
-        Gdk.cairo_set_source_rgba(
-            cr, view.get_style_context().get_color(Gtk.StateFlags.INSENSITIVE)
-        )
+        # Ask for the insensitive color through a saved context: querying a
+        # state the view is not in is unsupported on the live one.
+        context = view.get_style_context()
+        context.save()
+        context.set_state(Gtk.StateFlags.INSENSITIVE)
+        color = context.get_color(context.get_state())
+        context.restore()
+        Gdk.cairo_set_source_rgba(cr, color)
         visible = view.get_visible_rect()
         bottom = visible.y + visible.height
         first, _ = view.get_line_at_y(visible.y)
