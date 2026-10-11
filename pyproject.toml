@@ -46,6 +46,9 @@ CodeEditor = "toga_code_editor.platforms.iOS:CodeEditor"
 [project.entry-points."toga_code_editor.backend.toga_android"]
 CodeEditor = "toga_code_editor.platforms.android:CodeEditor"
 
+[project.entry-points."toga_code_editor.backend.toga_gtk"]
+CodeEditor = "toga_code_editor.platforms.gtk:CodeEditor"
+
 [project.entry-points."toga_code_editor.backend.toga_winforms"]
 CodeEditor = "toga_code_editor.platforms.winforms:CodeEditor"
 
@@ -95,6 +98,7 @@ omit = [
     "*/toga_code_editor/platforms/cocoa.py",
     "*/toga_code_editor/platforms/iOS.py",
     "*/toga_code_editor/platforms/android.py",
+    "*/toga_code_editor/platforms/gtk.py",
     "*/toga_code_editor/platforms/winforms.py",
 ]
 
