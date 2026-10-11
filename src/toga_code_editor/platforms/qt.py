@@ -1,4 +1,4 @@
-from bisect import bisect_right
+from bisect import bisect_left, bisect_right
 
 from PySide6.QtCore import QRect, Qt
 from PySide6.QtGui import (
@@ -100,12 +100,12 @@ class TogaSpanHighlighter(QSyntaxHighlighter):
         block = self.currentBlock()
         start = block.position()
         end = start + block.length()
-        # Spans are sorted and disjoint, so the first that can reach this block is
-        # the last one starting before it.
-        index = max(bisect_right(self.starts, start) - 1, 0)
-        for span in self.spans[index:]:
-            if span.start >= end:
-                break
+        # Spans are sorted and disjoint, so the ones that can reach this block
+        # are the last one starting before it through the last one starting
+        # inside it.
+        first = max(bisect_right(self.starts, start) - 1, 0)
+        last = bisect_left(self.starts, end)
+        for span in self.spans[first:last]:
             fmt = self.formats.get(span.kind)
             low = max(span.start, start)
             high = min(span.end, end)
