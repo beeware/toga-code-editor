@@ -80,7 +80,7 @@ briefcase dev -a testbed-qt   # Linux (Qt backend)
 briefcase run iOS -a testbed  # iOS
 ```
 
-On macOS, iOS, Windows, and Linux, the example installs the widget straight from this repository; add `-r` after changing the widget source so Briefcase reinstalls it.
+On macOS, iOS, Windows, and Linux, the example installs the widget straight from this repository; add `-r` after changing the widget source so Briefcase reinstalls it. Running under Linux will also require any system dependencies; see [Toga's platform documentation](https://toga.beeware.org/en/stable/reference/platforms/linux/) for details.
 
 On Android the example installs the widget from a wheel in `dist/`, because Gradle rejects a path requirement whose directory contains the Android build tree. Build the wheel from the repository root before each Android run that should pick up widget changes:
 
