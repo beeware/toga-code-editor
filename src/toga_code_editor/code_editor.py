@@ -13,7 +13,6 @@ from toga.widgets.multilinetextinput import OnChangeHandler
 
 from .highlighting import (
     DEFAULT_THEME,
-    Highlighter,
     NullHighlighter,
     PygmentsHighlighter,
     Theme,
@@ -21,14 +20,6 @@ from .highlighting import (
 
 REHIGHLIGHT_DELAY = 0.15
 """Seconds to wait after the last native edit before re-highlighting."""
-
-
-def _highlighter_for(language: str | None) -> Highlighter:
-    return NullHighlighter() if language is None else PygmentsHighlighter(language)
-
-
-def _theme_for(theme: Theme | None) -> Theme:
-    return DEFAULT_THEME if theme is None else theme
 
 
 def _report_rehighlight_failure(task: asyncio.Task) -> None:
@@ -69,25 +60,23 @@ class CodeEditor(toga.MultilineTextInput):
             user content to display.
         :param on_change: A handler that will be invoked when the value of the widget
             changes.
-        :param language: A Pygments lexer alias such as ``"python"``, or ``None`` for
+        :param language: A Pygments lexer alias such as `"python"`, or `None` for
             no highlighting.
         :param show_line_numbers: Whether to show the line-number gutter.
-        :param theme: A mapping from :class:`TokenKind` to :class:`Style`, or ``None``
+        :param theme: A mapping from :class:`TokenKind` to :class:`Style`, or `None`
             for the default theme.
         :param kwargs: Initial style properties. Unless a font family is given here or
-            on ``style``, the editor uses a monospace font.
+            on `style`, the editor uses a monospace font.
         """
         if "font_family" not in kwargs and (
             style is None or "font_family" not in style
         ):
             kwargs["font_family"] = MONOSPACE
 
-        # Resolve the highlighting state before the widget exists: an unknown
-        # language raises before anything is created, and the inherited constructor
-        # paints the initial value once, with the highlighter and theme in hand.
-        self._highlighter: Highlighter = _highlighter_for(language)
-        self._language = language
-        self._theme: Theme = _theme_for(theme)
+        # Prime the initial state of the widget.
+        self._language = None
+        self._highlighter = NullHighlighter()
+        self._theme = DEFAULT_THEME
         self._show_line_numbers = True
         self._pending_rehighlight: asyncio.Task | None = None
 
@@ -102,6 +91,8 @@ class CodeEditor(toga.MultilineTextInput):
         )
 
         self.show_line_numbers = show_line_numbers
+        self.theme = theme
+        self.language = language
 
     @cached_property
     def factory(self):
@@ -119,9 +110,6 @@ class CodeEditor(toga.MultilineTextInput):
 
     def _create(self) -> Any:
         impl = self.factory.CodeEditor(interface=self)
-        # The backend needs the theme before the inherited constructor sets the
-        # initial value, which paints the first highlights.
-        impl.set_theme(self._theme)
         return impl
 
     @toga.MultilineTextInput.value.setter
@@ -131,28 +119,30 @@ class CodeEditor(toga.MultilineTextInput):
 
     @property
     def language(self) -> str | None:
-        """The Pygments lexer alias used for highlighting, or ``None`` for none.
+        """The Pygments lexer alias used for highlighting, or `None` for none.
 
-        Setting an alias Pygments does not know raises :exc:`ValueError` and leaves
-        the previous language in place.
+        :raises ValueError: if an unknown language is specified.
         """
         return self._language
 
     @language.setter
     def language(self, value: str | None) -> None:
-        highlighter = _highlighter_for(value)
+        # Define the highlighter first - this will raise an error if the
+        # language is not recognized.
+        self._highlighter = (
+            NullHighlighter() if value is None else PygmentsHighlighter(value)
+        )
         self._language = value
-        self._highlighter = highlighter
         self._rehighlight()
 
     @property
     def theme(self) -> Theme:
-        """The mapping from token kind to style; ``None`` restores the default."""
+        """The mapping from token kind to style; `None` restores the default."""
         return self._theme
 
     @theme.setter
     def theme(self, value: Theme | None) -> None:
-        self._theme = _theme_for(value)
+        self._theme = DEFAULT_THEME if value is None else value
         self._impl.set_theme(self._theme)
         self._rehighlight()
 
@@ -174,8 +164,8 @@ class CodeEditor(toga.MultilineTextInput):
         """Called by the backend when the user edits the text.
 
         Re-lexing on every keystroke would be wasteful, so wait for a short pause.
-        This is a task rather than a bare ``call_later`` because Toga's Android event
-        loop only arms its next wakeup for work scheduled through ``call_soon``; a
+        This is a task rather than a bare `call_later` because Toga's Android event
+        loop only arms its next wakeup for work scheduled through `call_soon`; a
         timer added from a native callback would otherwise never fire.
         """
         self._cancel_pending_rehighlight()

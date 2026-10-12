@@ -8,8 +8,6 @@ A [Toga](https://toga.beeware.org) widget for editing code, with line numbers an
 pip install toga-code-editor
 ```
 
-The package depends on `pygments` and on `toga-core` 0.5.7 or later in the 0.5 series, because it subclasses Toga backend internals that can change between minor versions. Your app installs the Toga backend for its platform as usual; `toga-code-editor` contributes its implementation for that backend through entry points, the same way Toga's own widgets are found.
-
 ## Usage
 
 ```python
@@ -37,7 +35,7 @@ Unless you give the widget a font family, it uses a monospace font. Autocorrect,
 
 ### Themes
 
-A theme is a plain mapping. Kinds you leave out are drawn in the widget's normal text color. `DEFAULT_THEME` is read-only, so unpack it into a new dict to change it, as below.
+A theme is a Python mapping between "kinds" of content, and a text style definition. The `DEFAULT_THEME` can be customized:
 
 ```python
 from toga_code_editor import DEFAULT_THEME, Style, TokenKind
@@ -50,7 +48,7 @@ theme = {
 editor.theme = theme
 ```
 
-`Style.color` accepts anything Toga's color properties accept. The token kinds are `KEYWORD`, `BUILTIN`, `DEFINITION`, `DECORATOR`, `STRING`, `NUMBER`, `COMMENT`, `OPERATOR`, `PUNCTUATION`, `TAG`, `ATTRIBUTE`, and `VARIABLE`. Everything else, including plain names, is `TEXT`, which is never styled.
+`Style.color` accepts anything Toga's color properties accept. The token kinds are `KEYWORD`, `BUILTIN`, `DEFINITION`, `DECORATOR`, `STRING`, `NUMBER`, `COMMENT`, `OPERATOR`, `PUNCTUATION`, `TAG`, `ATTRIBUTE`, and `VARIABLE`. Everything else, including plain names, uses a kind of `TEXT`, which is never styled.
 
 ## Platform notes
 
@@ -81,7 +79,7 @@ briefcase run iOS
 briefcase run android
 ```
 
-On macOS, Windows, and iOS the example installs the widget straight from this repository; add `-r` after changing the widget source so Briefcase reinstalls it. On Android the example installs the widget from a wheel in `dist/`, because Gradle rejects a path requirement whose directory contains the Android build tree. The example's Android requirement names that wheel file, version and all, so a version bump must update `examples/editor/pyproject.toml` too, and a stale wheel in `dist/` ships the old code without complaint. Build the wheel from the repository root before each Android run that should pick up widget changes:
+On macOS, Windows, and iOS, the example installs the widget straight from this repository; add `-r` after changing the widget source so Briefcase reinstalls it. On Android the example installs the widget from a wheel in `dist/`, because Gradle rejects a path requirement whose directory contains the Android build tree. Build the wheel from the repository root before each Android run that should pick up widget changes:
 
 ```console
 uv build --wheel

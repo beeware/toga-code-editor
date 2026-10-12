@@ -43,7 +43,7 @@ class TokenKind(StrEnum):
 class Span:
     """A run of text with one token kind.
 
-    Offsets are Python string indices: ``start`` inclusive, ``end`` exclusive.
+    Offsets are Python string indices: `start` inclusive, `end` exclusive.
     """
 
     start: int
@@ -55,8 +55,8 @@ class Span:
 class Style:
     """How a token kind is drawn.
 
-    ``color`` accepts any Toga color value, including a string, and is stored as a
-    :class:`~toga.colors.Color`.
+    `color` accepts any Toga color value, including a string, and is stored as a
+    [Color][toga.colors.Color].
     """
 
     color: Color
@@ -75,7 +75,7 @@ Theme = Mapping[TokenKind, Style]
 """A mapping from token kind to style. Kinds absent from the theme are left unstyled."""
 
 # Read-only, so no editor can change the default under another; unpack it with
-# ``{**DEFAULT_THEME, ...}`` to build a custom theme.
+# `{**DEFAULT_THEME, ...}` to build a custom theme.
 DEFAULT_THEME: Theme = MappingProxyType(
     {
         TokenKind.KEYWORD: Style("#a626a4"),
@@ -147,7 +147,7 @@ class NullHighlighter:
 class PygmentsHighlighter:
     """Tokenize text with a Pygments lexer.
 
-    :param language: A Pygments lexer alias, such as ``"python"``.
+    :param language: A Pygments lexer alias, such as `"python"`.
     :raises ValueError: If Pygments has no lexer for the alias.
     """
 
@@ -169,9 +169,9 @@ class PygmentsHighlighter:
 
 
 def language_for_filename(path: str | bytes | PathLike) -> str | None:
-    """Return the Pygments lexer alias for a filename, or ``None`` if there is none.
+    """Return the Pygments lexer alias for a filename, or `None` if there is none.
 
-    The whole filename is matched, so names such as ``Makefile`` resolve.
+    The whole filename is matched, so names such as `Makefile` resolve.
     """
     lexer_class = find_lexer_class_for_filename(fsdecode(path))
     return None if lexer_class is None else lexer_class.aliases[0]

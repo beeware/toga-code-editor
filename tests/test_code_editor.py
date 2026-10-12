@@ -4,9 +4,7 @@ import pytest
 from toga.fonts import MONOSPACE, SERIF, SYSTEM
 from toga.style import Pack
 from toga_dummy.utils import (
-    EventLog,
     assert_action_performed,
-    assert_action_performed_with,
     attribute_value,
 )
 
@@ -72,16 +70,6 @@ def test_theme_and_line_numbers(app):
     editor.show_line_numbers = False
     assert not editor.show_line_numbers
     assert attribute_value(editor, "show_line_numbers") is False
-
-
-def test_construction_highlights_once(app):
-    """The initial value, language, and theme are painted in a single pass."""
-    theme = {TokenKind.NUMBER: Style("red")}
-    editor = CodeEditor(value="x = 1", language="python", theme=theme)
-
-    assert EventLog.values(editor, "highlights") == [X_EQUALS_ONE]
-    # The backend had the theme before that paint.
-    assert_action_performed_with(editor, "paint", theme=theme)
 
 
 def test_value_rehighlights(app):
