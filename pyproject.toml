@@ -30,7 +30,7 @@ classifiers = [
     "Topic :: Software Development :: Widget Sets",
 ]
 dependencies = [
-    "toga-core >= 0.5.7",
+    "toga-core >= 0.5.7, < 0.6",
     "pygments >= 2.19",
 ]
 
@@ -45,6 +45,9 @@ CodeEditor = "toga_code_editor.platforms.iOS:CodeEditor"
 
 [project.entry-points."toga_code_editor.backend.toga_android"]
 CodeEditor = "toga_code_editor.platforms.android:CodeEditor"
+
+[project.entry-points."toga_code_editor.backend.toga_winforms"]
+CodeEditor = "toga_code_editor.platforms.winforms:CodeEditor"
 
 [dependency-groups]
 # Extras used by developers *of* briefcase are pinned to specific versions to
@@ -92,6 +95,7 @@ omit = [
     "*/toga_code_editor/platforms/cocoa.py",
     "*/toga_code_editor/platforms/iOS.py",
     "*/toga_code_editor/platforms/android.py",
+    "*/toga_code_editor/platforms/winforms.py",
 ]
 
 [tool.coverage.paths]

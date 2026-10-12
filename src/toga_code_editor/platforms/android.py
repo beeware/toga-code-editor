@@ -40,7 +40,7 @@ class TogaGutterLayoutListener(dynamic_proxy(View.OnLayoutChangeListener)):
         # logical line. Defer the rebuild until this layout pass has finished.
         with suppress_reference_error():
             if (right - left, bottom - top) != (o_right - o_left, o_bottom - o_top):
-                self.impl.native.post(self.impl.gutter_updater)
+                self.impl.post_gutter_update()
 
 
 class TogaGutterTouchListener(dynamic_proxy(View.OnTouchListener)):
@@ -68,7 +68,12 @@ class CodeEditor(MultilineTextInput):
         self.gutter = TextView(self._native_activity)
         self.gutter.setId(View.generateViewId())
         self.gutter.setGravity(Gravity.END | Gravity.TOP)
-        self.gutter.setTextColor(self.native.getCurrentHintTextColor())
+        # Themes always resolve a hint color; fall back to the text color if not.
+        self.gutter.setTextColor(
+            self.native.getHintTextColors() or self.native.getTextColors()
+        )
+        # A column of line numbers is noise to a screen reader.
+        self.gutter.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO)
         # Without a movement method, a TextView scrolls back to its start on the
         # first draw after setText(), which would undo the scroll sync every time
         # the numbers are rebuilt. The movement method also makes the view
@@ -111,8 +116,6 @@ class CodeEditor(MultilineTextInput):
         self.disable_suggestions()
         self.prefer_keyboard_resize()
         self.theme = {}
-        self.spans = []
-        self.active_spans = []
 
     def prefer_keyboard_resize(self):
         # By default Android pans the whole window to keep the cursor above the soft
@@ -145,14 +148,14 @@ class CodeEditor(MultilineTextInput):
     def set_font(self, font):
         super().set_font(font)
         self.sync_gutter_font()
-        self.native.post(self.gutter_updater)
+        self.post_gutter_update()
 
     def _on_change(self):
         self.interface._schedule_rehighlight()
         self.interface.on_change()
         # The text layout is rebuilt after this callback returns; update the
         # gutter once that has happened.
-        self.native.post(self.gutter_updater)
+        self.post_gutter_update()
 
     # CodeEditor backend contract
 
@@ -160,11 +163,16 @@ class CodeEditor(MultilineTextInput):
         self.theme = theme
 
     def set_highlights(self, spans):
-        self.spans = spans
         editable = self.native.getText()
-        for span in self.active_spans:
-            editable.removeSpan(span)
-        self.active_spans = []
+        # Strip every color and style span, not only the ones applied here, so
+        # formatting that arrived with pasted rich text is reset as well. Android
+        # keeps the spans in the Editable, so set_font and set_color need no
+        # re-apply and nothing is tracked between calls.
+        styled = False
+        for span_class in (ForegroundColorSpan, StyleSpan):
+            for span in editable.getSpans(0, editable.length(), span_class):
+                editable.removeSpan(span)
+                styled |= span_class is StyleSpan
 
         for span in to_utf16_spans(str(editable), spans):
             style = self.theme.get(span.kind)
@@ -176,11 +184,16 @@ class CodeEditor(MultilineTextInput):
                     Typeface.ITALIC if style.italic else Typeface.NORMAL
                 )
                 native_spans.append(StyleSpan(typeface_style))
+                styled = True
             for native_span in native_spans:
                 editable.setSpan(
                     native_span, span.start, span.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
                 )
-                self.active_spans.append(native_span)
+
+        # A bold or italic span can re-wrap a line without any text change, so
+        # rebuild the gutter when one was present before or after this pass.
+        if styled:
+            self.post_gutter_update()
 
     def set_show_line_numbers(self, value):
         # A GONE anchor collapses to zero width, so the editor fills the row.
@@ -196,10 +209,16 @@ class CodeEditor(MultilineTextInput):
         )
         self.gutter.setIncludeFontPadding(self.native.getIncludeFontPadding())
 
+    def post_gutter_update(self):
+        # Rebuild once after the pending layout pass, however many changes precede it.
+        self.native.removeCallbacks(self.gutter_updater)
+        self.native.post(self.gutter_updater)
+
     def update_gutter(self):
         layout = self.native.getLayout()
         if layout is None:
-            # No layout pass has happened yet; the next change will post again.
+            # No layout pass has happened yet; the layout listener posts again when
+            # the first one finishes.
             return
         text = self.native.getText()
         numbers = []

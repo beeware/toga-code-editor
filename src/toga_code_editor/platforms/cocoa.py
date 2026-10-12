@@ -6,6 +6,7 @@ from rubicon.objc import (
     NSRange,
     NSRect,
     ObjCClass,
+    objc_id,
     objc_method,
     objc_property,
 )
@@ -37,6 +38,14 @@ NSItalicFontMask = 1 << 0
 NSBoldFontMask = 1 << 1
 
 GUTTER_PADDING = 6
+# The pasteboard types the editor reads; toga_cocoa binds none of these constants.
+# NSTextView's drag-and-drop still matches the legacy names, so both spellings of
+# "string" are needed, and the filenames type keeps "drop a file, get its path".
+PLAIN_TEXT_PASTEBOARD_TYPES = [
+    "public.utf8-plain-text",  # NSPasteboardTypeString
+    "NSStringPboardType",
+    "NSFilenamesPboardType",
+]
 
 
 class TogaCodeTextView(TogaTextView):
@@ -45,6 +54,18 @@ class TogaCodeTextView(TogaTextView):
         self.interface._schedule_rehighlight()
         self.interface.on_change()
         self.impl.text_changed()
+
+    # Rich text from another app would keep attributes that the re-highlight never
+    # resets. Reading only plain-text types from the pasteboard covers paste, drag
+    # and drop, and Services alike; the paste: override is belt and braces for Cmd-V.
+
+    @objc_method
+    def readablePasteboardTypes(self) -> objc_id:
+        return PLAIN_TEXT_PASTEBOARD_TYPES
+
+    @objc_method
+    def paste_(self, sender) -> None:
+        self.pasteAsPlainText(sender)
 
 
 class TogaLineNumberView(NSRulerView):
@@ -89,6 +110,8 @@ class CodeEditor(MultilineTextInput):
         self.native_text.setAutomaticSpellingCorrectionEnabled(False)
         self.native_text.setAutomaticTextReplacementEnabled(False)
         self.native_text.setAutomaticTextCompletionEnabled(False)
+        # Smart insert and delete add and remove spaces around words.
+        self.native_text.setSmartInsertDeleteEnabled(False)
 
         self.native_text.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable
         self.native.documentView = self.native_text
@@ -126,6 +149,7 @@ class CodeEditor(MultilineTextInput):
         # once the storage is styled, so the base style is tracked here instead.
         self.base_font = self.native_text.font
         self.base_color = NSColor.textColor
+        self.rebuild_gutter_attributes()
 
         self.theme = {}
         self.attributes = {}
@@ -144,6 +168,7 @@ class CodeEditor(MultilineTextInput):
         super().set_font(font)
         self.base_font = font._impl.native
         self.rebuild_attributes()
+        self.rebuild_gutter_attributes()
         self.apply_highlights()
         self.text_changed()
 
@@ -222,21 +247,33 @@ class CodeEditor(MultilineTextInput):
             self.ruler.ruleThickness = thickness
         self.ruler.setNeedsDisplay(True)
 
-    def gutter_label(self, text):
+    def rebuild_gutter_attributes(self):
+        # Built once per font, rather than once per visible line per draw.
         attributes = NSMutableDictionary.alloc().init()
         attributes[NSFontAttributeName] = self.base_font
         attributes[NSForegroundColorAttributeName] = NSColor.secondaryLabelColor
-        return NSAttributedString.alloc().initWithString(text, attributes=attributes)
+        self.gutter_attributes = attributes
+
+    def gutter_label(self, text):
+        return NSAttributedString.alloc().initWithString(
+            text, attributes=self.gutter_attributes
+        )
 
     def draw_line_numbers(self):
         layout = self.layout_manager
         container = self.native_text.textContainer
         visible = self.native_text.visibleRect
-        inset = self.native_text.textContainerInset
+        # The layout manager works in container coordinates; textContainerOrigin is
+        # where the container sits in the view, inset included.
+        origin = self.native_text.textContainerOrigin
         text_length = self.native_text.textStorage.length()
 
+        container_rect = NSRect(
+            NSPoint(visible.origin.x - origin.x, visible.origin.y - origin.y),
+            visible.size,
+        )
         glyph_range = layout.glyphRangeForBoundingRect(
-            visible, inTextContainer=container
+            container_rect, inTextContainer=container
         )
         char_range = layout.characterRangeForGlyphRange(
             glyph_range, actualGlyphRange=None
@@ -260,5 +297,5 @@ class CodeEditor(MultilineTextInput):
                 )
             label = self.gutter_label(str(number))
             x = thickness - GUTTER_PADDING - label.size().width
-            y = fragment.origin.y - visible.origin.y + inset.height
+            y = fragment.origin.y + origin.y - visible.origin.y
             label.drawAtPoint(NSPoint(x, y))
