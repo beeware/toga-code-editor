@@ -85,3 +85,15 @@ android {
 
 [tool.setuptools_scm]
 root = "../../"
+
+[tool.briefcase.app.editor-qt]
+formal_name = "Editor"
+sources = [
+    "src/editor_qt",
+    "src/editor",
+]
+
+requires = [
+    "../..",
+    "toga-qt[system] ~= 0.5.7",
+]

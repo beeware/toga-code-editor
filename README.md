@@ -75,9 +75,10 @@ The test suite runs against Toga's dummy backend. Real backends are checked with
 
 ```console
 cd examples/editor
-briefcase dev            # macOS, or Linux with the GTK backend and Windows
-briefcase run iOS
-briefcase run android
+briefcase dev -a testbed           # macOS, Windows, or Linux (GTK backend)
+briefcase dev -a testbed-qt           # Linux (Qt backend)
+briefcase run iOS -a testbed
+briefcase run android -a testbed
 ```
 
 On macOS, iOS, Windows, and Linux, the example installs the widget straight from this repository; add `-r` after changing the widget source so Briefcase reinstalls it. On Android the example installs the widget from a wheel in `dist/`, because Gradle rejects a path requirement whose directory contains the Android build tree. Build the wheel from the repository root before each Android run that should pick up widget changes:
