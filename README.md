@@ -75,30 +75,20 @@ The test suite runs against Toga's dummy backend. Real backends are checked with
 
 ```console
 cd examples/editor
-briefcase dev -a testbed           # macOS, Windows, or Linux (GTK backend)
-briefcase dev -a testbed-qt           # Linux (Qt backend)
-briefcase run iOS -a testbed
-briefcase run android -a testbed
+briefcase dev -a testbed      # macOS, Windows, or Linux (GTK backend)
+briefcase dev -a testbed-qt   # Linux (Qt backend)
+briefcase run iOS -a testbed  # iOS
 ```
 
-On macOS, iOS, Windows, and Linux, the example installs the widget straight from this repository; add `-r` after changing the widget source so Briefcase reinstalls it. On Android the example installs the widget from a wheel in `dist/`, because Gradle rejects a path requirement whose directory contains the Android build tree. Build the wheel from the repository root before each Android run that should pick up widget changes:
+On macOS, iOS, Windows, and Linux, the example installs the widget straight from this repository; add `-r` after changing the widget source so Briefcase reinstalls it.
+
+On Android the example installs the widget from a wheel in `dist/`, because Gradle rejects a path requirement whose directory contains the Android build tree. Build the wheel from the repository root before each Android run that should pick up widget changes:
 
 ```console
 uv build --wheel
 cd examples/editor
-briefcase run android -r
+briefcase run android -a testbed -r
 ```
-
-On Linux, `briefcase dev` installs `toga-gtk`, which builds PyGObject and pycairo from source, so it needs a compiler and the GLib, GObject Introspection, and cairo development packages. On Ubuntu 24.04 or later and Debian 13 or later, install `build-essential pkg-config python3-dev libgirepository-2.0-dev libcairo2-dev gir1.2-gtk-3.0 libcanberra-gtk3-module` first; on Fedora, install `gcc pkg-config python3-devel gobject-introspection-devel cairo-gobject-devel gtk3 libcanberra-gtk3`. Toga's Linux platform documentation has the packages for other distributions. The Qt backend runs from its own virtual environment, because Toga refuses to guess when both Linux backends are installed:
-
-```console
-cd examples/editor
-uv venv .venv-qt
-uv pip install --python .venv-qt/bin/python -e ../.. "toga-qt[pyside6-essentials] ~= 0.5.7"
-TOGA_BACKEND=toga_qt PYTHONPATH=src .venv-qt/bin/python -m editor
-```
-
-On a Wayland session Qt uses its Wayland plugin and needs nothing more. On an X11 session, PySide6's X11 plugin also needs `libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-xinerama0 libxcb-xkb1 libxkbcommon-x11-0` on Ubuntu, which a stock desktop install lacks.
 
 Every user-visible change needs a fragment in `changes/`, named `<issue>.<kind>.md` where kind is `feature`, `bugfix`, `doc`, or `misc`. Release notes are assembled with `towncrier build`.
 
