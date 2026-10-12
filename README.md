@@ -55,7 +55,7 @@ editor.theme = theme
 ## Platform notes
 
 - **macOS** uses an `NSRulerView` for the gutter and the system's adaptive color mapping, so theme colors follow dark mode.
-- **Windows** paints the gutter beside a `RichTextBox` and colors text through RichEdit's character formatting, with undo recording suspended so Ctrl+Z still undoes typing. Theme colors do not follow the system appearance; WinForms draws the editor light. Tab inserts a tab, and Ctrl+V pastes plain text.
+- **Windows** paints the gutter beside a `RichTextBox` and colors text through RichEdit's character formatting, with undo recording suspended while it paints, so Ctrl+Z still undoes typing. Theme colors do not change with the system appearance; WinForms draws the editor light. Tab inserts a tab, and Ctrl+V pastes plain text.
 - **Android** 12 and later are supported. The example app is checked on Android 12 and Android 15 emulators.
 - **iOS** and **Android** draw the gutter themselves. Theme colors do not change with the system appearance; the default theme is chosen to be legible on both light and dark backgrounds.
 - Highlighting re-lexes the whole buffer after a short pause in typing. Files of a few thousand lines are fine on a desktop; very large files are slower on phones.

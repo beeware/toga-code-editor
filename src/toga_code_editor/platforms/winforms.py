@@ -73,8 +73,9 @@ IID_ITEXTDOCUMENT = GUID(
 
 # COM method prototypes; the first argument is always the interface pointer. The
 # document methods declare a plain integer result rather than HRESULT, so ctypes
-# never raises from them: the paint's restore chain must run to its end whatever
-# they report, and none of them fails on a live control.
+# never raises from them, and their results are discarded by design: the paint's
+# restore chain must run to its end whatever they report, and none of them fails
+# on a live control.
 QUERY_INTERFACE = WINFUNCTYPE(HRESULT, c_void_p, POINTER(GUID), POINTER(c_void_p))
 RELEASE = WINFUNCTYPE(c_ulong, c_void_p)
 COUNT_METHOD = WINFUNCTYPE(c_long, c_void_p, POINTER(c_long))  # Freeze, Unfreeze
@@ -162,7 +163,11 @@ class CodeEditor(MultilineTextInput):
         self.attributes = {}
         self.spans = []
         self.line_starts = [0]
+        self.line_height = 0
         self.document = None
+        # Size the gutter for the empty text now, rather than leaving the Panel's
+        # default width in place until the style applies a font.
+        self.text_changed()
 
     @property
     def hwnd(self):
@@ -196,6 +201,15 @@ class CodeEditor(MultilineTextInput):
         super().set_background_color(color)
         self.gutter.BackColor = self.native.BackColor
 
+    def get_tab_index(self):
+        return self.frame.TabIndex
+
+    def set_tab_index(self, tab_index):
+        # The frame is what sits among the window's other widgets; inside it the
+        # text box is the only tab stop.
+        self.frame.TabIndex = tab_index
+        self.native.TabIndex = tab_index
+
     # Native events
 
     def winforms_text_changed(self, sender, event):
@@ -210,7 +224,7 @@ class CodeEditor(MultilineTextInput):
         self._text_history = text
         self.interface._schedule_rehighlight()
         self.interface.on_change()
-        self.text_changed()
+        self.text_changed(text)
 
     def winforms_key_down(self, sender, event):
         # RichTextBox pastes rich text, whose paragraph formatting the re-highlight
@@ -294,8 +308,11 @@ class CodeEditor(MultilineTextInput):
         length = self.native.TextLength
         if length == 0:
             return
+        # Reading Handle can create the handle, which drops any cached document, so
+        # it comes before the document is acquired.
+        hwnd = self.hwnd
         if self.document is None:
-            self.document = TextDocument(self.hwnd)
+            self.document = TextDocument(hwnd)
         # Between a native edit and the debounced re-highlight the spans describe the
         # previous text, so clamp them to the current length.
         spans = [
@@ -304,7 +321,6 @@ class CodeEditor(MultilineTextInput):
             if span.start < length
         ]
         native = self.native
-        hwnd = self.hwnd
         selection = (native.SelectionStart, native.SelectionLength)
         scroll = POINT()
         SendMessageW(hwnd, EM_GETSCROLLPOS, 0, byref(scroll))
@@ -331,24 +347,33 @@ class CodeEditor(MultilineTextInput):
                     native.SelectionFont = font
         finally:
             # The notifications come back before the selection is restored, so
-            # WinForms sees that change, and the selection goes back before the view
-            # thaws, since RichEdit scrolls to the selection at that point.
+            # WinForms sees that change. WinForms' Select sends EM_SCROLLCARET after
+            # EM_SETSEL, and the freeze defers every one of those scrolls until the
+            # view thaws, so the selection goes back before the thaw and the scroll
+            # position is put back after it; the scroll restore is load-bearing.
             self.document.resume_undo()
             SendMessageW(hwnd, EM_SETEVENTMASK, 0, mask)
-            native.Select(*selection)
-            self.document.unfreeze()
-            SendMessageW(hwnd, EM_SETSCROLLPOS, 0, byref(scroll))
-            # A bold or italic span can re-wrap a line.
-            self.gutter.Invalidate()
+            try:
+                native.Select(*selection)
+            finally:
+                self.document.unfreeze()
+                SendMessageW(hwnd, EM_SETSCROLLPOS, 0, byref(scroll))
+                # A bold or italic span can re-wrap a line.
+                self.gutter.Invalidate()
 
     # Gutter
 
-    def text_changed(self):
-        self.line_starts = utf16_line_starts(self.get_value())
+    def text_changed(self, text=None):
+        # The change handler passes the text it has already read; every other
+        # caller pays one read of the buffer.
+        if text is None:
+            text = self.get_value()
+        self.line_starts = utf16_line_starts(text)
         digits = len(str(len(self.line_starts)))
         size = TextRenderer.MeasureText(
             "0" * digits, self.base_font, UNBOUNDED, GUTTER_TEXT_FLAGS
         )
+        self.line_height = size.Height
         width = size.Width + 2 * self.scale_in(GUTTER_PADDING)
         if self.gutter.Width != width:
             self.gutter.Width = width
@@ -357,7 +382,7 @@ class CodeEditor(MultilineTextInput):
     def winforms_gutter_paint(self, sender, event):
         hwnd = self.hwnd
         height = self.native.ClientSize.Height
-        line_height = self.base_font.Height
+        line_height = self.line_height
         right = self.gutter.Width - self.scale_in(GUTTER_PADDING)
         point = POINT(0, 0)
         # The first visible character and the logical line it belongs to. That
