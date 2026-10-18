@@ -55,8 +55,11 @@ CodeEditor = "toga_code_editor.platforms.qt:CodeEditor"
 [project.entry-points."toga_code_editor.backend.toga_winforms"]
 CodeEditor = "toga_code_editor.platforms.winforms:CodeEditor"
 
+[project.urls]
+Homepage = "https://github.com/beeware/toga-code-editor"
+
 [dependency-groups]
-# Extras used by developers *of* briefcase are pinned to specific versions to
+# Extras used by developers *of* toga-code-editor are pinned to specific versions to
 # ensure environment consistency.
 pre-commit = [
     "pre-commit == 4.6.2",
