@@ -75,9 +75,9 @@ The test suite runs against Toga's dummy backend. Real backends are checked with
 
 ```console
 cd examples/editor
-briefcase dev -a testbed      # macOS, Windows, or Linux (GTK backend)
-briefcase dev -a testbed-qt   # Linux (Qt backend)
-briefcase run iOS -a testbed  # iOS
+briefcase dev -a editor      # macOS, Windows, or Linux (GTK backend)
+briefcase dev -a editor-qt   # Linux (Qt backend)
+briefcase run iOS -a editor  # iOS
 ```
 
 On macOS, iOS, Windows, and Linux, the example installs the widget straight from this repository; add `-r` after changing the widget source so Briefcase reinstalls it. Running under Linux will also require any system dependencies; see [Toga's platform documentation](https://toga.beeware.org/en/stable/reference/platforms/linux/) for details.
@@ -87,7 +87,7 @@ On Android the example installs the widget from a wheel in `dist/`, because Grad
 ```console
 uv build --wheel
 cd examples/editor
-briefcase run android -a testbed -r
+briefcase run android -a editor -r
 ```
 
 Every user-visible change needs a fragment in `changes/`, named `<issue>.<kind>.md` where kind is `feature`, `bugfix`, `doc`, or `misc`. Release notes are assembled with `towncrier build`.
